@@ -44,6 +44,7 @@ namespace HabTrucks
             this.serviceInstaller1.DisplayName = "HabTrucks";
             this.serviceInstaller1.ServiceName = "HabTrucks";
             this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
+            this.serviceInstaller1.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.serviceInstaller1_AfterInstall);
             // 
             // ProjectInstaller
             // 

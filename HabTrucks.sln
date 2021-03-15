@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HabTrucks", "HabTrucks\HabTrucks.csproj", "{955DA04D-EFC5-42E4-A650-DC176AB89356}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "HabTrucks Service", "HabTrucks Service\HabTrucks Service.vdproj", "{33A86A31-9208-489B-8AD4-5BB79CEC4229}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "..\Service\Service\Service.csproj", "{1431D8FB-A911-4B9E-B808-EF81BA77E785}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,12 @@ Global
 		{955DA04D-EFC5-42E4-A650-DC176AB89356}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{955DA04D-EFC5-42E4-A650-DC176AB89356}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{955DA04D-EFC5-42E4-A650-DC176AB89356}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33A86A31-9208-489B-8AD4-5BB79CEC4229}.Debug|Any CPU.ActiveCfg = Debug
+		{33A86A31-9208-489B-8AD4-5BB79CEC4229}.Release|Any CPU.ActiveCfg = Release
+		{1431D8FB-A911-4B9E-B808-EF81BA77E785}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1431D8FB-A911-4B9E-B808-EF81BA77E785}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1431D8FB-A911-4B9E-B808-EF81BA77E785}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1431D8FB-A911-4B9E-B808-EF81BA77E785}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

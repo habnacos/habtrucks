@@ -11,12 +11,12 @@ using System.Threading;
 using System.Timers;
 using System.IO.Ports;
 using SuperWebSocket;
+using Newtonsoft.Json;
 
 namespace HabTrucks
 {
     public partial class HabTrucksService : ServiceBase
     {
-        SerialPort _serialPort;
         WebSocketServer wsServer;
         List<WebSocketSession> connections = new List<WebSocketSession>();
         System.Timers.Timer timer = new System.Timers.Timer(); // name space(using System.Timers;)  
@@ -27,58 +27,95 @@ namespace HabTrucks
 
         protected override void OnStart(string[] args)
         {
-            WriteToFile("Service is started at " + DateTime.Now);
             timer.Elapsed += new ElapsedEventHandler(OnElapsedTime);
             timer.Interval = 5000; //number in milisecinds  
             timer.Enabled = true;
 
             wsServer = new WebSocketServer();
-            wsServer.Setup(3000);
+            wsServer.Setup(1337);
             wsServer.NewSessionConnected += WsServer_NewSessionConnected;
             wsServer.NewMessageReceived += WsServer_NewMessageReceived;
             wsServer.NewDataReceived += WsServer_NewDataReceived;
             wsServer.SessionClosed += WsServer_SessionClosed;
 
+            if (!File.Exists("config.json"))
+            {
+                StreamWriter fs = File.CreateText("config.json");
+                fs.WriteLine("{");
+                fs.WriteLine("\t\"center_code_sap\": \"1709\",");
+                fs.WriteLine("\t\"websocket\": \"http://portal.daabon.com.co:1337\",");
+                fs.WriteLine("\t\"ports\": [");
+                fs.WriteLine("\t\t{");
+                fs.WriteLine("\t\t\t\"PortName\": \"COM3\",");
+                fs.WriteLine("\t\t\t\"BaudRate\": 9600,");
+                fs.WriteLine("\t\t\t\"DataBits\": 8,");
+                fs.WriteLine("\t\t\t\"ReadTimeout\": 10000,");
+                fs.WriteLine("\t\t\t\"NewLine\": \"\\r\",");
+                fs.WriteLine("\t\t\t\"Broadcast\": \"weight\"");
+                fs.WriteLine("\t\t}");
+                fs.WriteLine("\t]");
+                fs.WriteLine("}");
+                fs.Close();
+            }
+
             wsServer.Start();
 
-            void ReadSerialPort()
+            void ReadSerialPort(dynamic config_port)
             {
-                void Send(String value)
+                void Send(bool type, String message, string value = "")
                 {
                     List<WebSocketSession> _connections;
                     _connections = new List<WebSocketSession>(connections);
                     foreach (WebSocketSession connection in _connections)
-                        connection.Send(value);
+                        connection.Send("{ \"broadcast\": " + config_port.Broadcast + ", \"type\": " + type + ", \"message\": \"" + message + "\", \"value\": \"" + value + "\"}");
                 }
 
-                while (!_serialPort.IsOpen)
+                SerialPort _serialPort = new SerialPort("COM3");
+                _serialPort.ReadTimeout = 1000;
+
+                while (true)
                 {
-                    _serialPort.Open();
-                    _serialPort.ReadTimeout = 5000;
-                    Send("{ \"type\": false, \"message\": \"Connecting\"}");
+                    try
+                    {
+                        if (!_serialPort.IsOpen)
+                        {
+                            _serialPort.Open();
+                            Send(false, "Connecting port " + config_port.PortName);
+                        }
+                    }
+                    catch
+                    {
+                        Send(false, "Port " + config_port.PortName + " not open");
+                        Thread.Sleep(1000);
+                    }
 
                     while (_serialPort.IsOpen)
                     {
                         try
                         {
-                            Send("{ \"type\": false, \"message\": \"" + _serialPort.ReadLine() + "\"}");
-                            Thread.Sleep(500);
+                            String _read = _serialPort.ReadLine();
+                            String value = String.Join("", _read.ToCharArray().Where(Char.IsDigit));
+
+                            Send(true, _read, value);
                         }
                         catch (System.TimeoutException)
                         {
-                            Send("{ \"type\": false, \"message\": \"Time Out\"}");
-                            Thread.Sleep(2000);
+                            Send(false, "Time Out " + config_port.PortName);
                             break;
                         }
                     }
-
-                    _serialPort.Close();
                 }
             }
 
-            _serialPort = new SerialPort("COM3");
-            Thread sPort = new Thread(ReadSerialPort);
-            sPort.Start();
+            StreamReader r = new StreamReader("config.json");
+            string json = r.ReadToEnd();
+            r.Close();
+            dynamic config = JsonConvert.DeserializeObject(json);
+            foreach (var port in config.ports)
+            {
+                Thread sPort = new Thread(() => ReadSerialPort(port));
+                sPort.Start();
+            }
 
             void WsServer_SessionClosed(WebSocketSession session, SuperSocket.SocketBase.CloseReason value)
             {
@@ -90,8 +127,6 @@ namespace HabTrucks
             }
             void WsServer_NewMessageReceived(WebSocketSession session, string value)
             {
-                foreach (WebSocketSession connection in connections)
-                    connection.Send("Hola -> " + value);
             }
             void WsServer_NewSessionConnected(WebSocketSession session)
             {
@@ -101,35 +136,9 @@ namespace HabTrucks
         }
         protected override void OnStop()
         {
-            WriteToFile("Service is stopped at " + DateTime.Now);
         }
         private void OnElapsedTime(object source, ElapsedEventArgs e)
         {
-            WriteToFile("Service is recall at " + DateTime.Now);
-        }
-        public void WriteToFile(string Message)
-        {
-            string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-            string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\ServiceLog_" + DateTime.Now.Date.ToShortDateString().Replace('/', '_') + ".txt";
-            if (!File.Exists(filepath))
-            {
-                // Create a file to write to.   
-                using (StreamWriter sw = File.CreateText(filepath))
-                {
-                    sw.WriteLine(Message);
-                }
-            }
-            else
-            {
-                using (StreamWriter sw = File.AppendText(filepath))
-                {
-                    sw.WriteLine(Message);
-                }
-            }
         }
     }
 }

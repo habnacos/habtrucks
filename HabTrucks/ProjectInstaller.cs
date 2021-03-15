@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration.Install;
+using System.ServiceProcess;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,6 +15,11 @@ namespace HabTrucks
         public ProjectInstaller()
         {
             InitializeComponent();
+        }
+
+        private void serviceInstaller1_AfterInstall(object sender, InstallEventArgs e)
+        {
+            new ServiceController(serviceInstaller1.ServiceName).Start();
         }
     }
 }
